@@ -27,15 +27,14 @@ control by default. Everything else is opt-in, see
 <sup>1</sup> The Pura Plus has an ambient light, but the plugin does not expose it as a HomeKit
 nightlight.
 
-<sup>2</sup> The Pura Home has not yet been exercised against physical hardware. Its controls
-follow the same path as every other model, so they are expected to work, but it will report a
-generic model name in HomeKit until its hardware version is known. If you own one, a
-[report](https://github.com/homebridge-plugins/homebridge-pura/issues) of the `hwVersion` from a
-debug log would let us label it correctly.
+<sup>2</sup> The Pura Home has now been verified against physical hardware. It reports hardware
+version major `35` (device version `wall_5`), which the plugin recognizes, so it is labeled
+correctly in HomeKit and exposes on/off, intensity, and nightlight controls like the other
+supported models.
 
 Other Pura hardware that reports itself through the same API, including the Pura 3 and the Pura
-Car, is picked up automatically and gets on/off and intensity control, but has likewise not been
-verified against a physical device.
+Car, is picked up automatically and gets on/off and intensity control, but has not been verified
+against a physical device.
 
 ## Installation
 
