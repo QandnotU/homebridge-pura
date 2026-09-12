@@ -378,10 +378,54 @@ export class PuraPlatform implements DynamicPlatformPlugin {
     return `${deviceId}-diffuser`;
   }
 
-  private async registerDiffuserAccessory(device: PuraDevice): Promise<string> {
+  /**
+   * The HomeKit tile name for a diffuser. A device discovered before Pura populated its name falls
+   * back to `Pura <id>`; once the real name arrives, healDiffuserName recovers it.
+   */
+  private getDiffuserDisplayName(device: PuraDevice): string {
     const deviceName = device.name || `Pura ${device.id}`;
-    const baseName = deviceName.endsWith('Diffuser') ? deviceName : `${deviceName} Diffuser`;
-    const accessoryName = baseName;
+    return deviceName.endsWith('Diffuser') ? deviceName : `${deviceName} Diffuser`;
+  }
+
+  private getGenericDiffuserDisplayName(deviceId: string): string {
+    return `Pura ${deviceId} Diffuser`;
+  }
+
+  /**
+   * A device first discovered while Pura still reported an empty name registers under the generic
+   * `Pura <id> Diffuser` fallback, and the diffuser tile is otherwise named only at creation. Once
+   * the real name is available on a later refresh, rename the accessory so Homebridge's cache (and
+   * a subsequent re-add in the Home app) reflects it. Scoped to only heal from the generic
+   * fallback, so a normally named device - or a name the device already carries - is left alone.
+   */
+  private healDiffuserName(accessory: DiffuserAccessory, device: PuraDevice): void {
+    if (!device.name) {
+      return;
+    }
+    if (accessory.displayName !== this.getGenericDiffuserDisplayName(device.id)) {
+      return;
+    }
+    const desiredName = this.getDiffuserDisplayName(device);
+    if (desiredName === accessory.displayName) {
+      return;
+    }
+    const previousName = accessory.displayName;
+    accessory.displayName = desiredName;
+    const primaryService =
+      accessory.getService(this.Service.Switch) ?? accessory.getService(this.Service.Fanv2);
+    primaryService?.updateCharacteristic(this.Characteristic.Name, desiredName);
+    accessory
+      .getService(this.Service.AccessoryInformation)
+      ?.updateCharacteristic(this.Characteristic.Name, desiredName);
+    this.api.updatePlatformAccessories([accessory]);
+    this.log.info(
+      `Renamed diffuser accessory "${previousName}" to "${desiredName}" now that Pura reports a device name. ` +
+      'The Home app may keep showing the old tile name until the accessory is re-added.',
+    );
+  }
+
+  private async registerDiffuserAccessory(device: PuraDevice): Promise<string> {
+    const accessoryName = this.getDiffuserDisplayName(device);
     const serviceMode = this.getDiffuserServiceMode();
     const uniqueId = this.getDiffuserUniqueId(device.id, serviceMode);
     const uuid = this.api.hap.uuid.generate(uniqueId);
@@ -396,6 +440,7 @@ export class PuraPlatform implements DynamicPlatformPlugin {
       existingAccessory.context.accessoryType = 'diffuser';
       existingAccessory.context.serviceMode = serviceMode;
       this.api.updatePlatformAccessories([existingAccessory]);
+      this.healDiffuserName(existingAccessory, device);
       existingAccessory.handler = new PuraPlatformAccessory(this, existingAccessory, this.puraApi);
     } else {
       if (this.accessories.has(legacyUuid) || this.accessories.has(alternateUuid)) {
@@ -1137,6 +1182,7 @@ export class PuraPlatform implements DynamicPlatformPlugin {
       }
       accessory.context.device = device;
       this.api.updatePlatformAccessories([accessory]);
+      this.healDiffuserName(accessory, device);
       const handler = accessory.handler;
       if (handler) {
         handler.updateDevice(device);
