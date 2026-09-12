@@ -650,6 +650,7 @@ export class PuraApi {
           22: 'Pura Plus',
           26: 'Pura Mini',
           27: 'Pura Car Pro',
+          35: 'Pura Home',
         };
         return map[major] ?? `Pura ${major}`;
       }
@@ -658,6 +659,7 @@ export class PuraApi {
       const normalized = deviceVersion.trim().toLowerCase();
       const map: Record<string, string> = {
         v48: 'Pura 4',
+        wall_5: 'Pura Home',
       };
       if (map[normalized]) {
         return map[normalized];
