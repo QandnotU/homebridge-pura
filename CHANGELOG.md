@@ -1,5 +1,11 @@
 # Release Notes
 
+## 1.8.1 - 2026-09-11
+
+### Fixed
+- Recognize the **Pura Home** (hardware version major `35`, device version `wall_5`), verified against physical hardware, so it shows its real model name in HomeKit instead of a generic "Pura 35".
+- Heal a diffuser's HomeKit name when a device first discovered before Pura reported its name (registered as `Pura <id>`) later provides one, so the tile no longer stays stuck on the generic fallback. Scoped to the generic fallback only, so normally named or user-renamed tiles are left alone.
+
 ## 1.8.0 - 2026-08-31
 
 Multi-bay support. Both new features are opt-in and off by default, so an existing setup is
